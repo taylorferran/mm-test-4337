@@ -13,7 +13,7 @@ const App: React.FC = () => {
   const [smartAccount, setSmartAccount] = useState<any>(null);
   const [smartAccountAddress, setSmartAccountAddress] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [userOpHash, setUserOpHash] = useState<string>('');
+  const [transactionResult, setTransactionResult] = useState<any>(null);
   const [error, setError] = useState<string>('');
 
   const connectWallet = async () => {
@@ -41,14 +41,14 @@ const App: React.FC = () => {
     try {
       setIsLoading(true);
       setError('');
-      setUserOpHash('');
+      setTransactionResult(null);
 
       if (!smartAccount) {
         throw new Error('Smart account not initialized');
       }
 
-      const hash = await sendUserOperation(smartAccount);
-      setUserOpHash(hash);
+      const result = await sendUserOperation(smartAccount);
+      setTransactionResult(result);
     } catch (err: any) {
       setError(err.message || 'Failed to send user operation');
       console.error('Error sending transaction:', err);
@@ -124,7 +124,7 @@ const App: React.FC = () => {
               opacity: isLoading ? 0.7 : 1
             }}
           >
-            {isLoading ? 'Sending...' : 'Send User Operation (3 Dummy Transactions)'}
+{isLoading ? 'Sending Cross-Chain User Operations...' : 'Send Automatic Cross-Chain User Operations (Sepolia → Base Sepolia)'}
           </button>
         )}
       </div>
@@ -142,27 +142,153 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {userOpHash && (
+      {transactionResult && (
         <div style={{
           backgroundColor: '#d4edda',
           color: '#155724',
-          padding: '12px',
+          padding: '15px',
           borderRadius: '6px',
           marginBottom: '20px',
           border: '1px solid #c3e6cb'
         }}>
-          <strong>User Operation Hash:</strong>
-          <code style={{ 
-            backgroundColor: '#c3e6cb', 
-            padding: '2px 6px', 
-            borderRadius: '4px',
-            fontSize: '12px',
-            wordBreak: 'break-all',
-            display: 'block',
-            marginTop: '8px'
+          <h3 style={{ margin: '0 0 15px 0' }}>
+            {transactionResult.crossChain ? '🌐 Cross-Chain' : ''} Transaction Results: {transactionResult.totalOperations} User Operations
+            {transactionResult.crossChain && <span style={{ fontSize: '14px', fontWeight: 'normal' }}> (Sepolia + Base Sepolia)</span>}
+          </h3>
+          
+          {/* First User Operation */}
+          <div style={{ 
+            backgroundColor: '#e8f5e8', 
+            padding: '12px', 
+            borderRadius: '4px', 
+            marginBottom: '15px',
+            border: '1px solid #b8d4b8'
           }}>
-            {userOpHash}
-          </code>
+            <h4 style={{ margin: '0 0 10px 0' }}>🚀 User Operation #1 - {transactionResult.userOperation1?.chain || 'Sepolia'}</h4>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Status:</strong> {transactionResult.userOperation1.success ? '✅ Success' : '❌ Failed'}
+            </div>
+            
+            <div style={{ marginBottom: '8px' }}>
+              <strong>User Op Hash:</strong>
+              <code style={{ 
+                backgroundColor: '#c3e6cb', 
+                padding: '2px 4px', 
+                borderRadius: '3px',
+                fontSize: '10px',
+                wordBreak: 'break-all',
+                display: 'block',
+                marginTop: '4px'
+              }}>
+                {transactionResult.userOperation1.userOperationHash}
+              </code>
+            </div>
+
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Transaction Hash:</strong>
+              <code style={{ 
+                backgroundColor: '#c3e6cb', 
+                padding: '2px 4px', 
+                borderRadius: '3px',
+                fontSize: '10px',
+                wordBreak: 'break-all',
+                display: 'block',
+                marginTop: '4px'
+              }}>
+                {transactionResult.userOperation1.transactionHash}
+              </code>
+            </div>
+
+            <div style={{ display: 'flex', gap: '15px', fontSize: '14px', marginBottom: '8px' }}>
+              <span><strong>Block:</strong> {transactionResult.userOperation1.blockNumber?.toString()}</span>
+              <span><strong>Gas:</strong> {transactionResult.userOperation1.gasUsed?.toString()}</span>
+            </div>
+
+            <a 
+              href={`${transactionResult.userOperation1?.explorer || 'https://sepolia.etherscan.io'}/tx/${transactionResult.userOperation1.transactionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#007bff', textDecoration: 'underline', fontSize: '14px' }}
+            >
+              View on {transactionResult.userOperation1?.chain === 'Base Sepolia' ? 'Base Explorer' : 'Etherscan'} →
+            </a>
+          </div>
+
+          {/* Second User Operation */}
+          {transactionResult.userOperation2 ? (
+            <div style={{ 
+              backgroundColor: '#e8f5e8', 
+              padding: '12px', 
+              borderRadius: '4px', 
+              marginBottom: '15px',
+              border: '1px solid #b8d4b8'
+            }}>
+              <h4 style={{ margin: '0 0 10px 0' }}>🚀 User Operation #2 - {transactionResult.userOperation2.chain}</h4>
+              
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Status:</strong> {transactionResult.userOperation2.success ? '✅ Success' : '❌ Failed'}
+              </div>
+              
+              <div style={{ marginBottom: '8px' }}>
+                <strong>User Op Hash:</strong>
+                <code style={{ 
+                  backgroundColor: '#c3e6cb', 
+                  padding: '2px 4px', 
+                  borderRadius: '3px',
+                  fontSize: '10px',
+                  wordBreak: 'break-all',
+                  display: 'block',
+                  marginTop: '4px'
+                }}>
+                  {transactionResult.userOperation2.userOperationHash}
+                </code>
+              </div>
+
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Transaction Hash:</strong>
+                <code style={{ 
+                  backgroundColor: '#c3e6cb', 
+                  padding: '2px 4px', 
+                  borderRadius: '3px',
+                  fontSize: '10px',
+                  wordBreak: 'break-all',
+                  display: 'block',
+                  marginTop: '4px'
+                }}>
+                  {transactionResult.userOperation2.transactionHash}
+                </code>
+              </div>
+
+              <div style={{ display: 'flex', gap: '15px', fontSize: '14px', marginBottom: '8px' }}>
+                <span><strong>Block:</strong> {transactionResult.userOperation2.blockNumber?.toString()}</span>
+                <span><strong>Gas:</strong> {transactionResult.userOperation2.gasUsed?.toString()}</span>
+              </div>
+
+              <a 
+                href={`${transactionResult.userOperation2.explorer}/tx/${transactionResult.userOperation2.transactionHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#007bff', textDecoration: 'underline', fontSize: '14px' }}
+              >
+                View on {transactionResult.userOperation2.chain === 'Base Sepolia' ? 'Base Explorer' : 'Etherscan'} →
+              </a>
+            </div>
+          ) : null}
+
+          <div style={{ 
+            backgroundColor: '#fff3cd', 
+            color: '#856404',
+            padding: '10px', 
+            borderRadius: '4px',
+            border: '1px solid #ffeaa7',
+            fontSize: '14px'
+          }}>
+            <strong>📊 Summary:</strong> {transactionResult.crossChain ? 
+              'Automatic cross-chain user operations successfully executed! The first operation was sent on Sepolia, then MetaMask automatically switched to Base Sepolia for the second operation. This demonstrates seamless multi-chain account abstraction!' :
+              'Both user operations were sent simultaneously without waiting for the first to complete. This demonstrates the parallel processing capability of account abstraction!'
+            }
+          </div>
         </div>
       )}
 
@@ -176,9 +302,17 @@ const App: React.FC = () => {
         <ol>
           <li>Click "Connect MetaMask Wallet" to connect your wallet and generate a smart account</li>
           <li>The smart account address will be displayed above</li>
-          <li>Click "Send User Operation" to send a bundled transaction with 3 dummy transfers</li>
+          <li>Click "Send Automatic Cross-Chain User Operations" to:</li>
+          <ul style={{ marginTop: '8px', marginBottom: '8px' }}>
+            <li>Send the first user operation on Sepolia (3 transactions of 0.001 ETH each)</li>
+            <li>Automatically switch MetaMask to Base Sepolia</li>
+            <li>Create a Base Sepolia smart account</li>
+            <li>Send the second user operation on Base Sepolia (3 transactions of 0.002 ETH each)</li>
+            <li>Switch back to Sepolia when complete</li>
+          </ul>
+          <li>View both transaction results with links to their respective block explorers</li>
         </ol>
-        <p><strong>Note:</strong> Make sure you're connected to the Sepolia testnet and have some test ETH in your SCW for gas fees.</p>
+        <p><strong>Note:</strong> Make sure you have test ETH on both Sepolia and Base Sepolia testnets. The app will automatically add Base Sepolia network to MetaMask if needed.</p>
       </div>
     </div>
   );
